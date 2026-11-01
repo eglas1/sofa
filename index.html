@@ -381,6 +381,8 @@
     <div class="field"><span>Taxa de bits máxima</span>
       <select id="sKbps"><option value="0">Automática</option><option value="1500">1.500 kbps</option><option value="3000">3.000 kbps</option><option value="4000">4.000 kbps</option><option value="6000">6.000 kbps</option><option value="8000">8.000 kbps</option><option value="12000">12.000 kbps</option></select></div>
     <div class="field"><span>Incluir áudio da tela (vídeos, jogos)</span><input type="checkbox" id="sAudio"></div>
+    <div class="field"><span>Áudio só do jogo (dispositivo virtual)</span><select id="dGame"></select></div>
+    <div class="note">Para enviar só o som do jogo: instale um cabo de áudio virtual (ex.: VB-Cable), no Windows direcione o jogo para ele em Configurações › Som › Mixer de volume, e escolha aqui o "CABLE Output". Deixe "Incluir áudio da tela" desligado e compartilhe a janela do jogo. Vale a partir do próximo compartilhamento.</div>
     <div class="note">Resolução, fps, prioridade e taxa de bits são aplicados na hora, mesmo durante o compartilhamento. O áudio da tela só vale ao iniciar um novo compartilhamento e só funciona em Chrome/Edge no computador.</div>
 
     <h3>Câmera</h3>
@@ -449,7 +451,7 @@
     screen: { res: '1080', fps: 30, hint: 'detail', kbps: 0, audio: false },
     cam: { res: '720', corner: 'br' },
     mic: { echo: true, noise: true, agc: true },
-    dev: { mic: '', cam: '', spk: '' }
+    dev: { mic: '', cam: '', spk: '', game: '' }
   };
   const PRESETS = {
     text:     { res: '1080', fps: 15, hint: 'detail', kbps: 3000 },
@@ -499,7 +501,7 @@
 
   // áudio / vídeo local
   let audioCtx = null, micGain = null, mixDest = null, micRaw = null, micSrc = null, outAudio = null;
-  let cameraTrack = null, screenStream = null, screenTrack = null, screenAudioSrc = null;
+  let cameraTrack = null, screenStream = null, screenTrack = null, screenAudioSrc = null, gameStream = null, gameSrc = null;
   let dummyTrack = null, dummyTimer = null;
   let compTrack = null, compStream = null, compCanvas = null, compCtx = null, compVidScreen = null, compVidCam = null, compTimer = null;
   const videoTrack = () => compTrack || screenTrack || cameraTrack || dummyTrack;
@@ -696,7 +698,7 @@
     if (!me.channel) return;
     if (!navigator.mediaDevices.getDisplayMedia) { toast('Seu navegador não suporta compartilhar tela (celulares geralmente não suportam).'); return; }
     const s = settings.screen;
-    try { screenStream = await navigator.mediaDevices.getDisplayMedia({ video: screenConstraints(false), audio: !!s.audio }); }
+    try { screenStream = await navigator.mediaDevices.getDisplayMedia({ video: screenConstraints(false), audio: !!s.audio, windowAudio: 'window' }); }
     catch (e) { screenStream = null; return; }
     screenTrack = screenStream.getVideoTracks()[0];
     screenTrack.contentHint = s.hint === 'auto' ? '' : s.hint;
@@ -704,12 +706,20 @@
     const at = screenStream.getAudioTracks()[0];
     if (at && audioCtx) { screenAudioSrc = audioCtx.createMediaStreamSource(new MediaStream([at])); screenAudioSrc.connect(mixDest); }
     else if (s.audio) toast('O navegador não enviou o áudio da tela. Na janela de seleção, marque "compartilhar áudio".');
+    if (settings.dev.game && audioCtx) {
+      try {
+        gameStream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: settings.dev.game }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+        gameSrc = audioCtx.createMediaStreamSource(gameStream); gameSrc.connect(mixDest);
+      } catch (e) { toast('Não consegui abrir a fonte de áudio do jogo.'); }
+    }
     pushVideo();
   }
   function killScreen() {
     if (screenStream) screenStream.getTracks().forEach(t => t.stop());
     screenStream = null; screenTrack = null;
     if (screenAudioSrc) { try { screenAudioSrc.disconnect(); } catch (e) {} screenAudioSrc = null; }
+    if (gameSrc) { try { gameSrc.disconnect(); } catch (e) {} gameSrc = null; }
+    if (gameStream) { gameStream.getTracks().forEach(t => t.stop()); gameStream = null; }
   }
   function stopScreen() { if (!screenStream) return; killScreen(); pushVideo(); }
   async function applyScreenLive() {
@@ -1208,6 +1218,7 @@
     fillSelect($('dMic'), devs.filter(d => d.kind === 'audioinput'), s.dev.mic, 'Padrão do sistema');
     fillSelect($('dCam'), devs.filter(d => d.kind === 'videoinput'), s.dev.cam, 'Padrão do sistema');
     fillSelect($('dSpk'), devs.filter(d => d.kind === 'audiooutput'), s.dev.spk, 'Padrão do sistema');
+    fillSelect($('dGame'), devs.filter(d => d.kind === 'audioinput'), s.dev.game, 'Nenhum');
     $('spkRow').hidden = !HTMLMediaElement.prototype.setSinkId;
     $('settings').hidden = false;
     lastTs = 0; statsTick(); clearInterval(statsTimer); statsTimer = setInterval(statsTick, 1000);
@@ -1239,6 +1250,7 @@
   bindSetting('mAgc',   () => { settings.mic.agc = $('mAgc').checked; startMic(); });
   bindSetting('dMic', () => { settings.dev.mic = $('dMic').value; startMic(); });
   bindSetting('dCam', () => { settings.dev.cam = $('dCam').value; restartCamera(); });
+  bindSetting('dGame', () => { settings.dev.game = $('dGame').value; });
   bindSetting('dSpk', () => { settings.dev.spk = $('dSpk').value; document.querySelectorAll('#grid video').forEach(setSink); });
   document.querySelectorAll('[data-preset]').forEach(b => {
     b.onclick = () => {
