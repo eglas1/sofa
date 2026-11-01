@@ -261,6 +261,14 @@
   #volpop .vp-name { font-family: var(--px); font-size: 9px; line-height: 1.6; color: var(--yellow); margin-bottom: 10px; word-break: break-word; }
   #volpop input[type=range] { width: 100%; accent-color: var(--green); }
   #volpop .vp-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 22px; color: var(--green); }
+  .campos { display: flex; align-items: center; gap: 8px; font-family: var(--px); font-size: 8px; color: var(--yellow); }
+  .corners { display: grid; grid-template-columns: repeat(2, 32px); gap: 3px; }
+  .corners button { height: 24px; border: 2px solid #000; border-radius: 0; background: var(--hover); color: #fff; font-size: 14px; line-height: 1; }
+  .corners button:hover { border-color: var(--yellow); }
+  .corners button.act { background: var(--accent); }
+  /* em tela cheia: sem moldura de "falando" em volta do vídeo */
+  .tile:fullscreen, .tile:fullscreen.speaking { border: 0; box-shadow: none; animation: none; }
+  .tile:-webkit-full-screen, .tile:-webkit-full-screen.speaking { border: 0; box-shadow: none; animation: none; }
   @media (prefers-reduced-motion: reduce) { .blink, .tile.speaking { animation: none; } }
 </style>
 </head>
@@ -277,9 +285,9 @@
 
     <label for="newcode">🔑 Código da sala (opcional)</label>
     <input id="newcode" maxlength="24" placeholder="ex.: time-alpha (vazio = aleatório)" autocomplete="off">
-    <button class="btn" id="btnCreate">▶ Nova partida</button>
+    <button class="btn" id="btnCreate">▶ Criar sala</button>
 
-    <div class="divider">— ou entre em uma partida —</div>
+    <div class="divider">— ou entre em uma sala —</div>
 
     <label for="code">Código da sala</label>
     <div class="row">
@@ -324,6 +332,15 @@
       <button class="ctl" id="btnDeaf">🎧 Áudio</button>
       <button class="ctl" id="btnCam">📷 Câmera</button>
       <button class="ctl" id="btnScreen">🖥️ Compartilhar tela</button>
+      <div class="campos" id="camPos" hidden title="Canto da câmera na tela compartilhada">
+        <span>📍 Câmera</span>
+        <div class="corners">
+          <button data-corner="tl" title="Superior esquerdo">↖</button>
+          <button data-corner="tr" title="Superior direito">↗</button>
+          <button data-corner="bl" title="Inferior esquerdo">↙</button>
+          <button data-corner="br" title="Inferior direito">↘</button>
+        </div>
+      </div>
       <button class="ctl hang" id="btnDisc">📞 Desconectar</button>
     </div>
   </main>
@@ -430,7 +447,7 @@
 
   const DEFAULTS = {
     screen: { res: '1080', fps: 30, hint: 'detail', kbps: 0, audio: false },
-    cam: { res: '720' },
+    cam: { res: '720', corner: 'br' },
     mic: { echo: true, noise: true, agc: true },
     dev: { mic: '', cam: '', spk: '' }
   };
@@ -470,6 +487,7 @@
   function saveSettings() { try { localStorage.setItem('voz-settings', JSON.stringify(settings)); } catch (e) {} }
 
   let peer = null, roomCode = '', isHost = false, connTimer = null;
+  let anchorPeer = null, anchorTimer = null;   // "âncora" da sala: quem segura o código quando o anfitrião original sai
   const me = { name: '', channel: null, muted: false, deaf: false };
   let mutedBeforeDeaf = false;
   let channels = DEFAULT_CHANNELS.map(c => ({ ...c }));
@@ -483,7 +501,8 @@
   let audioCtx = null, micGain = null, mixDest = null, micRaw = null, micSrc = null, outAudio = null;
   let cameraTrack = null, screenStream = null, screenTrack = null, screenAudioSrc = null;
   let dummyTrack = null, dummyTimer = null;
-  const videoTrack = () => screenTrack || cameraTrack || dummyTrack;
+  let compTrack = null, compStream = null, compCanvas = null, compCtx = null, compVidScreen = null, compVidCam = null, compTimer = null;
+  const videoTrack = () => compTrack || screenTrack || cameraTrack || dummyTrack;
   const outStream = () => new MediaStream([videoTrack(), outAudio].filter(Boolean));
 
   /* =====================================================================
@@ -574,7 +593,72 @@
     } catch (e) {}
   }
 
+  /* ---- câmera sobre a tela compartilhada (composição em canvas) ---- */
+  function makeVideoEl(track) {
+    const v = document.createElement('video'); v.muted = true; v.playsInline = true;
+    v.srcObject = new MediaStream([track]); v.play().catch(() => {});
+    return v;
+  }
+  function drawComposite() {
+    const sv = compVidScreen; if (!sv || !sv.videoWidth || !compCtx) return;
+    const w = sv.videoWidth, h = sv.videoHeight;
+    if (compCanvas.width !== w || compCanvas.height !== h) { compCanvas.width = w; compCanvas.height = h; }
+    compCtx.drawImage(sv, 0, 0, w, h);
+    const cv = compVidCam;
+    if (cv && cv.videoWidth) {
+      const pw = Math.round(w * 0.2), ph = Math.round(pw * cv.videoHeight / cv.videoWidth);
+      const m = Math.round(w * 0.015), b = Math.max(2, Math.round(w * 0.002));
+      const c = settings.cam.corner || 'br';
+      const x = c[1] === 'l' ? m : w - pw - m;
+      const y = c[0] === 't' ? m : h - ph - m;
+      compCtx.fillStyle = '#ff2e97'; compCtx.fillRect(x - b, y - b, pw + 2 * b, ph + 2 * b);
+      compCtx.drawImage(cv, x, y, pw, ph);
+    }
+  }
+  function startCompTimer() {
+    stopCompTimer();
+    const ms = Math.round(1000 / (Number(settings.screen.fps) || 30));
+    try {
+      const w = new Worker(URL.createObjectURL(new Blob(['let i;onmessage=e=>{clearInterval(i);if(e.data>0)i=setInterval(()=>postMessage(0),e.data)}'], { type: 'text/javascript' })));
+      w.onmessage = drawComposite; w.postMessage(ms);
+      compTimer = { stop: () => { w.postMessage(0); w.terminate(); } };
+    } catch (e) {
+      const i = setInterval(drawComposite, ms);
+      compTimer = { stop: () => clearInterval(i) };
+    }
+  }
+  function stopCompTimer() { if (compTimer) { compTimer.stop(); compTimer = null; } }
+  function syncComposite() {
+    const need = !!(screenTrack && cameraTrack);
+    if (need && !compTrack) {
+      compVidScreen = makeVideoEl(screenTrack); compVidCam = makeVideoEl(cameraTrack);
+      compCanvas = document.createElement('canvas'); compCanvas.width = 1280; compCanvas.height = 720;
+      compCtx = compCanvas.getContext('2d');
+      compStream = compCanvas.captureStream(Number(settings.screen.fps) || 30);
+      compTrack = compStream.getVideoTracks()[0];
+      compTrack.contentHint = settings.screen.hint === 'auto' ? '' : settings.screen.hint;
+      startCompTimer();
+    } else if (need) {
+      if (compVidCam.srcObject.getVideoTracks()[0] !== cameraTrack) compVidCam.srcObject = new MediaStream([cameraTrack]);
+      if (compVidScreen.srcObject.getVideoTracks()[0] !== screenTrack) compVidScreen.srcObject = new MediaStream([screenTrack]);
+    } else if (compTrack) stopComposite();
+  }
+  function stopComposite() {
+    stopCompTimer();
+    if (compTrack) compTrack.stop();
+    [compVidScreen, compVidCam].forEach(v => { if (v) { v.srcObject = null; } });
+    compTrack = compStream = compCanvas = compCtx = compVidScreen = compVidCam = null;
+  }
+  function updateCornerUI() {
+    document.querySelectorAll('#camPos [data-corner]').forEach(b => b.classList.toggle('act', b.dataset.corner === (settings.cam.corner || 'br')));
+    $('camPos').hidden = !(screenTrack && cameraTrack);
+  }
+  document.querySelectorAll('#camPos [data-corner]').forEach(b => {
+    b.onclick = () => { settings.cam.corner = b.dataset.corner; saveSettings(); updateCornerUI(); drawComposite(); };
+  });
+
   function pushVideo() {
+    syncComposite();
     const t = videoTrack();
     calls.forEach(c => { const s = videoSender(c); if (s) s.replaceTrack(t).then(() => applyVideoParams(c)).catch(() => {}); });
     updateLocalTile(); updateControls(); broadcastState();
@@ -631,6 +715,7 @@
   async function applyScreenLive() {
     if (!screenTrack) return;
     screenTrack.contentHint = settings.screen.hint === 'auto' ? '' : settings.screen.hint;
+    if (compTrack) { compTrack.contentHint = screenTrack.contentHint; startCompTimer(); }
     try { await screenTrack.applyConstraints(screenConstraints(true)); } catch (e) {}
     calls.forEach(applyVideoParams);
   }
@@ -735,7 +820,7 @@
   }
   function leaveChannel() {
     if (cameraTrack) { cameraTrack.onended = null; cameraTrack.stop(); cameraTrack = null; }
-    killScreen();
+    killScreen(); stopComposite();
     [...calls.keys()].forEach(closeCall);
     me.channel = null;
     removeTile('local');
@@ -785,6 +870,7 @@
     switch (d.t) {
       case 'hello':
         if (isHost) conn.send({ t: 'welcome', peers: [...conns.keys()].filter(x => x !== pid), channels, history: chatLog.slice(-50) });
+        else if (anchorPeer) conn.send(buildWelcome(pid));
         break;
       case 'welcome':
         if (pid === PREFIX + roomCode) {
@@ -828,6 +914,40 @@
     closeCall(pid);
     if (info) sysMsg(info.name + ' saiu da sala');
     renderChannels(); updateStageHead();
+    ensureAnchor();
+  }
+
+  /* =====================================================================
+     SALA SEMPRE ATIVA: o código da sala é um "ponto de entrada" (PeerJS).
+     Se quem o segura sair, outro participante assume o mesmo código,
+     então a sala continua existindo enquanto houver alguém nela.
+     ===================================================================== */
+  function buildWelcome(exceptPid) {
+    const ids = new Set([peer.id]);
+    conns.forEach((c, id) => { if (id !== exceptPid && id !== PREFIX + roomCode) ids.add(id); });
+    return { t: 'welcome', peers: [...ids], channels, history: chatLog.slice(-50) };
+  }
+  function ensureAnchor() {
+    if (!peer || $('app').hidden || isHost || anchorPeer) return;
+    clearTimeout(anchorTimer);
+    const ids = [peer.id, ...peersInfo.keys()].sort();
+    const rank = Math.max(0, ids.indexOf(peer.id));
+    anchorTimer = setTimeout(() => tryAnchor(0), 1500 + rank * 2500);   // o primeiro da fila tenta antes
+  }
+  function tryAnchor(n) {
+    if (!peer || $('app').hidden || isHost || anchorPeer) return;
+    const ap = new Peer(PREFIX + roomCode, { config: { iceServers: ICE_SERVERS } });
+    let ok = false;
+    ap.on('open', () => { ok = true; anchorPeer = ap; });
+    ap.on('connection', c => c.on('data', d => {
+      if (d && d.t === 'hello' && peer) { try { c.send(buildWelcome(c.peer)); } catch (e) {} }
+    }));
+    ap.on('close', () => { if (anchorPeer === ap) { anchorPeer = null; } });
+    ap.on('error', err => {
+      if (ok) return;
+      try { ap.destroy(); } catch (e) {}
+      if (err.type === 'unavailable-id' && n < 3) anchorTimer = setTimeout(() => tryAnchor(n + 1), 5000);   // outro já assumiu (ou o ID ainda está sendo liberado)
+    });
   }
 
   /* =====================================================================
@@ -936,6 +1056,7 @@
     setBtn('btnCam', cameraTrack ? '📷 Desligar câmera' : '📷 Câmera', cameraTrack ? 'on' : '', !inCh);
     setBtn('btnScreen', screenTrack ? '⏹️ Parar tela' : '🖥️ Compartilhar tela', screenTrack ? 'on' : '', !inCh);
     setBtn('btnDisc', '📞 Desconectar', '', !inCh);
+    updateCornerUI();
   }
   function renderAll() { renderChannels(); renderUserbar(); updateStageHead(); updateControls(); }
 
@@ -1176,9 +1297,11 @@
   }
 
   function cleanup() {
-    clearTimeout(connTimer);
-    killScreen();
+    clearTimeout(connTimer); clearTimeout(anchorTimer);
+    killScreen(); stopComposite();
     if (cameraTrack) { cameraTrack.onended = null; cameraTrack.stop(); cameraTrack = null; }
+    try { if (anchorPeer) anchorPeer.destroy(); } catch (e) {}
+    anchorPeer = null;
     if (micRaw) micRaw.getTracks().forEach(t => t.stop());
     if (dummyTrack) dummyTrack.stop();
     clearInterval(dummyTimer);
