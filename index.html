@@ -411,6 +411,13 @@
     .seg button { padding: 7px 10px; }
   }
 
+  .meter { position: relative; flex: 0 0 58%; height: 10px; border-radius: 999px; background: var(--hover); overflow: hidden; border: 1px solid var(--line); }
+  .meter i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, #5fae83, #d8bf93 75%, #a3262f); transition: width .08s linear; }
+  .meter b { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--wine); left: 0; display: none; }
+  .mictest { display: flex; align-items: center; gap: 12px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .mictest .note { margin: 0; flex: 1; min-width: 160px; }
+  .field input[type=range] { accent-color: var(--wine); flex: 0 0 52%; }
+
   /* ---------- tema da sala ---------- */
   .modal h2 .h2l { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .themebtn { border: 1px solid var(--wine); background: transparent; color: var(--wine); border-radius: 999px; padding: 6px 14px; font: 600 12px/1 'Inter', system-ui, sans-serif; letter-spacing: .06em; }
@@ -586,7 +593,12 @@
     <div class="field"><span>Microfone</span><select id="dMic"></select></div>
     <div class="field" id="spkRow"><span>Saída de áudio (alto-falante)</span><select id="dSpk"></select></div>
     <div class="field"><span>Cancelamento de eco</span><input type="checkbox" id="mEcho"></div>
-    <div class="field"><span>Supressão de ruído</span><input type="checkbox" id="mNoise"></div>
+    <div class="field"><span>Supressão de ruído</span>
+      <select id="mNoiseMode"><option value="off">Desligada</option><option value="browser">Padrão do navegador</option><option value="strong">Forte (filtro + portão de ruído)</option><option value="ai">IA (RNNoise) — melhor qualidade</option></select></div>
+    <div class="field" id="gateRow"><span>Limite do portão de ruído</span><input type="range" id="mGate" min="-70" max="-25" step="1"></div>
+    <div class="note" id="noiseNote"></div>
+    <div class="field"><span>Nível do microfone</span><div class="meter"><i id="micMeter"></i><b id="gateMark"></b></div></div>
+    <div class="mictest"><button type="button" class="pbtn" id="btnMicTest">🎙️ Testar meu microfone</button><span class="note" id="micTestMsg">Grava 5 segundos e toca de volta, já com o filtro aplicado.</span></div>
     <div class="field"><span>Ganho automático do microfone</span><input type="checkbox" id="mAgc"></div>
 
     <div id="modSec" hidden>
@@ -649,7 +661,7 @@
   const DEFAULTS = {
     screen: { res: '1080', fps: 30, hint: 'detail', kbps: 0, audio: false },
     cam: { res: '720', corner: 'br' },
-    mic: { echo: true, noise: true, agc: true },
+    mic: { echo: true, noise: true, agc: true, noiseMode: 'browser', gate: -48 },
     dev: { mic: '', cam: '', spk: '', game: '' }
   };
   const PRESETS = {
@@ -683,7 +695,7 @@
   function loadSettings() {
     try {
       const s = JSON.parse(localStorage.getItem('voz-settings') || '{}');
-      return { screen: { ...DEFAULTS.screen, ...s.screen }, cam: { ...DEFAULTS.cam, ...s.cam }, mic: { ...DEFAULTS.mic, ...s.mic }, dev: { ...DEFAULTS.dev, ...s.dev } };
+      return { screen: { ...DEFAULTS.screen, ...s.screen }, cam: { ...DEFAULTS.cam, ...s.cam }, mic: (m => { if (!(s.mic && s.mic.noiseMode)) m.noiseMode = s.mic && s.mic.noise === false ? 'off' : 'browser'; return m; })({ ...DEFAULTS.mic, ...s.mic }), dev: { ...DEFAULTS.dev, ...s.dev } };
     } catch (e) { return JSON.parse(JSON.stringify(DEFAULTS)); }
   }
   function saveSettings() { try { localStorage.setItem('voz-settings', JSON.stringify(settings)); } catch (e) {} }
@@ -727,17 +739,70 @@
     outAudio = mixDest.stream.getAudioTracks()[0];
     // o microfone é pedido depois que a sala abre (não trava a criação da sala)
   }
+  /* ---- cadeia do microfone: [IA RNNoise | filtro + portão de ruído] -> ganho (mudo) -> mixer ---- */
+  let micNodes = [], gateTicker = null, micAn = null, testDest = null, rn = null;
+  function makeTicker(ms, fn) {   // usa um Worker para não ser freado quando a aba fica em segundo plano
+    try {
+      const w = new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),' + ms + ')'], { type: 'text/javascript' })));
+      w.onmessage = fn; return { stop: () => w.terminate() };
+    } catch (e) { const i = setInterval(fn, ms); return { stop: () => clearInterval(i) }; }
+  }
+  function dropMicChain() {
+    if (gateTicker) { gateTicker.stop(); gateTicker = null; }
+    micNodes.forEach(n => { try { n.disconnect(); } catch (e) {} try { if (n.destroy) n.destroy(); } catch (e) {} });
+    micNodes = []; micAn = null; testDest = null;
+  }
+  async function loadRnnoiseNode() {   // IA de supressão (RNNoise, via WebAssembly). Se não carregar, o app usa o modo Forte.
+    try {
+      if (audioCtx.sampleRate !== 48000) return null;
+      const base = 'https://cdn.jsdelivr.net/npm/@sapphi-red/web-noise-suppressor@0.3.5/dist/';
+      if (!rn) {
+        const load = (async () => {
+          const mod = await import(base + 'index.js');
+          await audioCtx.audioWorklet.addModule(base + 'rnnoise/workletProcessor.js');
+          const wasmBinary = await mod.loadRnnoise({ url: base + 'rnnoise.wasm', simdUrl: base + 'rnnoise_simd.wasm' });
+          return { mod, wasmBinary };
+        })();
+        rn = await Promise.race([load, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))]);
+      }
+      return new rn.mod.RnnoiseWorkletNode(audioCtx, { wasmBinary: rn.wasmBinary, maxChannels: 1 });
+    } catch (e) { console.warn('RNNoise indisponível:', e); rn = null; return null; }
+  }
   async function startMic() {
-    if (micSrc) { try { micSrc.disconnect(); } catch (e) {} micSrc = null; }
+    dropMicChain(); micSrc = null;
     if (micRaw) { micRaw.getTracks().forEach(t => t.stop()); micRaw = null; }
     try {
+      const mode = settings.mic.noiseMode;
       micRaw = await navigator.mediaDevices.getUserMedia({ audio: {
         deviceId: settings.dev.mic ? { ideal: settings.dev.mic } : undefined,
-        echoCancellation: settings.mic.echo, noiseSuppression: settings.mic.noise, autoGainControl: settings.mic.agc
+        echoCancellation: settings.mic.echo, noiseSuppression: mode === 'browser' || mode === 'strong', autoGainControl: settings.mic.agc
       } });
       if (!audioCtx) { micRaw.getTracks().forEach(t => t.stop()); micRaw = null; return; }
       micSrc = audioCtx.createMediaStreamSource(micRaw);
-      micSrc.connect(micGain);
+      let last = micSrc; micNodes.push(micSrc);
+      let ai = null;
+      if (mode === 'ai') { ai = await loadRnnoiseNode(); if (!audioCtx) return; if (!ai) toast('Não consegui carregar a IA de ruído — usando o modo Forte.'); }
+      if (ai) { last.connect(ai); last = ai; micNodes.push(ai); }
+      else if (mode === 'strong' || mode === 'ai') {
+        const hp = audioCtx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 110; hp.Q.value = 0.7;
+        const an = audioCtx.createAnalyser(); an.fftSize = 1024;
+        const gate = audioCtx.createGain(); gate.gain.value = 0.02;
+        last.connect(hp); hp.connect(an); hp.connect(gate); last = gate;
+        micNodes.push(hp, an, gate);
+        const buf = new Float32Array(an.fftSize); let hold = 0;
+        gateTicker = makeTicker(25, () => {
+          if (!audioCtx) return;
+          an.getFloatTimeDomainData(buf);
+          let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+          const db = 20 * Math.log10(Math.sqrt(sum / buf.length) + 1e-9), now = performance.now();
+          if (db > settings.mic.gate) hold = now + 350;
+          const open = now < hold;
+          gate.gain.setTargetAtTime(open ? 1 : 0.02, audioCtx.currentTime, open ? 0.015 : 0.12);
+        });
+      }
+      last.connect(micGain);
+      micAn = audioCtx.createAnalyser(); micAn.fftSize = 1024; last.connect(micAn); micNodes.push(micAn);   // medidor e teste
+      testDest = audioCtx.createMediaStreamDestination(); last.connect(testDest); micNodes.push(testDest);
       watchSpeaking('local', micRaw);
     } catch (e) { toast('Microfone indisponível — você entra só ouvindo.'); }
     applyMute();
@@ -1468,7 +1533,7 @@
     $('sRes').value = s.screen.res; $('sFps').value = String(s.screen.fps); $('sHint').value = s.screen.hint;
     $('sKbps').value = String(s.screen.kbps); $('sAudio').checked = !!s.screen.audio;
     $('cRes').value = s.cam.res;
-    $('mEcho').checked = s.mic.echo; $('mNoise').checked = s.mic.noise; $('mAgc').checked = s.mic.agc;
+    $('mEcho').checked = s.mic.echo; syncNoiseUi(); $('mAgc').checked = s.mic.agc;
     let devs = []; try { devs = await navigator.mediaDevices.enumerateDevices(); } catch (e) {}
     fillSelect($('dMic'), devs.filter(d => d.kind === 'audioinput'), s.dev.mic, 'Padrão do sistema');
     fillSelect($('dCam'), devs.filter(d => d.kind === 'videoinput'), s.dev.cam, 'Padrão do sistema');
@@ -1479,9 +1544,10 @@
     $('modSec').hidden = !isHost; $('banCount').textContent = banned.size ? banned.size + (banned.size === 1 ? ' dispositivo banido' : ' dispositivos banidos') : 'Ninguém banido';
     $('btnUnban').disabled = !banned.size;
     $('settings').hidden = false;
+    startMeter();
     lastTs = 0; statsTick(); clearInterval(statsTimer); statsTimer = setInterval(statsTick, 1000);
   }
-  function closeSettings() { $('settings').hidden = true; clearInterval(statsTimer); }
+  function closeSettings() { $('settings').hidden = true; clearInterval(statsTimer); clearInterval(meterTimer); }
   async function statsTick() {
     const out = $('stats');
     let sender = null; for (const c of calls.values()) { sender = videoSender(c); if (sender) break; }
@@ -1496,6 +1562,56 @@
       out.textContent = 'Enviando: ' + (o.frameWidth || '?') + '×' + (o.frameHeight || '?') + ' · ' + Math.round(o.framesPerSecond || 0) + ' fps · ' + kbps + ' kbps' + (lim ? ' · limitado por ' + lim : '');
     } catch (e) { out.textContent = 'Estatísticas indisponíveis neste navegador.'; }
   }
+  const NOISE_NOTES = {
+    off: 'Sem nenhum filtro: todo o ruído do ambiente é enviado.',
+    browser: 'Filtro do próprio navegador. Funciona bem para ventilador e ruído constante.',
+    strong: 'Navegador + corte de graves + portão: o microfone fecha quando você para de falar. Ajuste o limite olhando a barra de nível (a linha marca o limite).',
+    ai: 'Rede neural (RNNoise) que remove teclado, cliques e vozes ao fundo. Precisa de internet para baixar uns 200 KB na primeira vez; se falhar, usa o modo Forte.'
+  };
+  function syncNoiseUi() {
+    const m = settings.mic.noiseMode;
+    $('mNoiseMode').value = m; $('mGate').value = String(settings.mic.gate);
+    $('gateRow').hidden = m !== 'strong'; $('noiseNote').textContent = NOISE_NOTES[m] || '';
+    updateGateMark();
+  }
+  function updateGateMark() {
+    const mk = $('gateMark'); mk.style.display = settings.mic.noiseMode === 'strong' ? 'block' : 'none';
+    mk.style.left = Math.max(0, Math.min(100, (settings.mic.gate + 80) / 80 * 100)) + '%';
+  }
+  let meterTimer = null;
+  function startMeter() {
+    clearInterval(meterTimer); const buf = new Float32Array(1024);
+    meterTimer = setInterval(() => {
+      if (!micAn) { $('micMeter').style.width = '0'; return; }
+      micAn.getFloatTimeDomainData(buf);
+      let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+      const db = 20 * Math.log10(Math.sqrt(sum / buf.length) + 1e-9);
+      $('micMeter').style.width = Math.max(0, Math.min(100, (db + 80) / 80 * 100)) + '%';
+    }, 80);
+  }
+  let micTesting = false;
+  $('btnMicTest').onclick = async () => {
+    if (micTesting) return;
+    const btn = $('btnMicTest'), msg = $('micTestMsg');
+    if (!testDest || !window.MediaRecorder) { toast('Microfone indisponível para teste.'); return; }
+    micTesting = true; btn.disabled = true;
+    try { if (audioCtx) await audioCtx.resume(); } catch (e) {}
+    let rec; const chunks = [];
+    try { rec = new MediaRecorder(testDest.stream); } catch (e) { toast('Seu navegador não consegue gravar o teste.'); micTesting = false; btn.disabled = false; return; }
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise(r => { rec.onstop = r; });
+    rec.start();
+    for (let t = 5; t > 0; t--) { btn.textContent = '🔴 Gravando…'; msg.textContent = 'Fale normalmente (' + t + ' s)'; await new Promise(r => setTimeout(r, 1000)); }
+    rec.stop(); await stopped;
+    const url = URL.createObjectURL(new Blob(chunks, { type: rec.mimeType || 'audio/webm' }));
+    const a = new Audio(url);
+    if (a.setSinkId && settings.dev.spk) { try { await a.setSinkId(settings.dev.spk); } catch (e) {} }
+    btn.textContent = '🔊 Reproduzindo…'; msg.textContent = 'É assim que os outros ouvem você.';
+    await new Promise(r => { a.onended = r; a.onerror = r; a.play().catch(r); });
+    URL.revokeObjectURL(url);
+    btn.textContent = '🎙️ Testar meu microfone'; msg.textContent = 'Grava 5 segundos e toca de volta, já com o filtro aplicado.';
+    btn.disabled = false; micTesting = false;
+  };
   function bindSetting(id, apply) { $(id).onchange = () => { apply(); saveSettings(); }; }
   bindSetting('sRes',  () => { settings.screen.res = $('sRes').value; applyScreenLive(); });
   bindSetting('sFps',  () => { settings.screen.fps = Number($('sFps').value); applyScreenLive(); });
@@ -1504,7 +1620,8 @@
   bindSetting('sAudio', () => { settings.screen.audio = $('sAudio').checked; });
   bindSetting('cRes',  () => { settings.cam.res = $('cRes').value; restartCamera(); calls.forEach(applyVideoParams); });
   bindSetting('mEcho',  () => { settings.mic.echo = $('mEcho').checked; startMic(); });
-  bindSetting('mNoise', () => { settings.mic.noise = $('mNoise').checked; startMic(); });
+  bindSetting('mNoiseMode', () => { settings.mic.noiseMode = $('mNoiseMode').value; settings.mic.noise = settings.mic.noiseMode === 'browser'; syncNoiseUi(); startMic(); });
+  $('mGate').oninput = () => { settings.mic.gate = Number($('mGate').value); saveSettings(); updateGateMark(); };
   bindSetting('mAgc',   () => { settings.mic.agc = $('mAgc').checked; startMic(); });
   bindSetting('dMic', () => { settings.dev.mic = $('dMic').value; startMic(); });
   bindSetting('dCam', () => { settings.dev.cam = $('dCam').value; restartCamera(); });
@@ -1925,6 +2042,7 @@
     [...watchers.keys()].forEach(unwatch);
     try { if (peer) peer.destroy(); } catch (e) {}
     try { if (audioCtx) audioCtx.close(); } catch (e) {}
+    dropMicChain(); rn = null;
     peer = null; audioCtx = null; micGain = null; mixDest = null; micRaw = null; micSrc = null; outAudio = null; dummyTrack = null;
     calls.clear(); conns.clear(); peersInfo.clear(); speaking.clear(); banned.clear(); blockedPeers.clear(); applyTheme('vinho');
     chatLog.length = 0; seenMsgs.clear(); unread = 0;
