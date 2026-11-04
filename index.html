@@ -297,6 +297,65 @@
   /* em tela cheia: sem moldura de "falando" em volta do vídeo */
   .tile:fullscreen, .tile:fullscreen.speaking { border: 0; box-shadow: none; border-radius: 0; }
   .tile:-webkit-full-screen, .tile:-webkit-full-screen.speaking { border: 0; box-shadow: none; border-radius: 0; }
+
+  /* ---------- barra do quadro central: dados e player ---------- */
+  #stage { position: relative; }
+  .stagebar { position: relative; display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 16px; background: var(--cream-2); border-top: 1px solid var(--line); }
+  .dice-group { display: flex; align-items: center; gap: 8px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--field); }
+  .seg button { border: 0; background: none; padding: 8px 13px; font-size: 12px; font-weight: 600; letter-spacing: .03em; color: var(--muted); }
+  .seg button.act { background: var(--wine); color: var(--cream); }
+  .sb-btn { border: 1px solid var(--wine); background: transparent; color: var(--wine); border-radius: 999px; padding: 9px 18px; font-size: 13px; font-weight: 600; letter-spacing: .04em; transition: background .15s, color .15s; }
+  .sb-btn:hover:not(:disabled), .sb-btn[aria-expanded="true"] { background: var(--wine); color: var(--cream); }
+  .sb-btn:disabled { opacity: .4; cursor: not-allowed; }
+  #btnMusic.live::after { content: ''; display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: var(--green); vertical-align: middle; }
+  .sb-pop { position: absolute; left: 50%; bottom: calc(100% + 8px); width: min(380px, calc(100% - 24px)); transform: translate(-50%, 8px); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .18s, transform .18s, visibility .18s; z-index: 12;
+            background: var(--cream-2); border: 1px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: 0 20px 50px rgba(61,14,26,.28); max-height: min(78vh, 560px); overflow: auto; }
+  .sb-pop.open { opacity: 1; visibility: visible; pointer-events: auto; transform: translate(-50%, 0); }
+  .mp-title { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--wine); margin-bottom: 10px; }
+  .mp-row { display: flex; gap: 8px; }
+  #musicUrl { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--field); color: var(--text); font-size: 14px; outline: none; }
+  #musicUrl:focus { border-color: var(--wine); box-shadow: 0 0 0 3px rgba(91,23,39,.12); }
+  .pbtn { border: 1px solid var(--wine); background: var(--wine); color: var(--cream); border-radius: 8px; padding: 9px 14px; font-size: 12px; font-weight: 600; letter-spacing: .05em; white-space: nowrap; }
+  .pbtn:hover:not(:disabled) { background: #721d33; }
+  .pbtn.ghost { background: transparent; color: var(--wine); }
+  .pbtn.ghost:hover:not(:disabled) { background: var(--wine); color: var(--cream); }
+  .pbtn:disabled { opacity: .4; cursor: not-allowed; }
+  .mp-now { margin: 12px 0 0; font-size: 13px; color: var(--muted); line-height: 1.4; word-break: break-word; }
+  .mp-player { display: none; margin-top: 12px; border-radius: 12px; overflow: hidden; background: #2b0d16; }
+  .mp-player.on { display: block; }
+  #ytWrap { aspect-ratio: 16 / 9; }
+  #ytWrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+  #spWrap iframe { width: 100%; height: 152px; border: 0; display: block; }
+  .mp-vol { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .mp-vol .iconbtn { color: var(--wine); font-size: 18px; padding: 4px 6px; }
+  .mp-vol .iconbtn:hover { background: var(--hover); color: var(--wine); }
+  #musicVol { flex: 1; accent-color: var(--wine); }
+  #musicPct { width: 40px; text-align: right; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .mp-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  /* animação dos dados no meio do palco */
+  .dicefx { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; pointer-events: none; opacity: 0; transition: opacity .35s;
+            background: radial-gradient(ellipse at center, rgba(61,14,26,.62) 0%, rgba(61,14,26,.28) 45%, rgba(61,14,26,0) 75%); }
+  .dicefx.show { opacity: 1; }
+  .dice-who { font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--cream); text-shadow: 0 2px 12px rgba(0,0,0,.45); }
+  .dice-row { display: flex; gap: 46px; perspective: 700px; }
+  .die3d { width: 84px; height: 84px; transform-style: preserve-3d; transform: rotateX(-22deg) rotateY(-28deg); }
+  .cube { position: relative; width: 84px; height: 84px; transform-style: preserve-3d; }
+  .face { position: absolute; inset: 0; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); place-items: center; padding: 11px; border-radius: 14px; backface-visibility: hidden;
+          background: linear-gradient(145deg, #fffaf0, #eadcc4); border: 1px solid #d8bf93; box-shadow: inset 0 0 12px rgba(140,109,52,.25); }
+  .face.f1 { transform: translateZ(42px); }
+  .face.f6 { transform: rotateY(180deg) translateZ(42px); }
+  .face.f3 { transform: rotateY(90deg) translateZ(42px); }
+  .face.f4 { transform: rotateY(-90deg) translateZ(42px); }
+  .face.f2 { transform: rotateX(90deg) translateZ(42px); }
+  .face.f5 { transform: rotateX(-90deg) translateZ(42px); }
+  .face i { width: 15px; height: 15px; border-radius: 50%; }
+  .face i.pip { background: radial-gradient(circle at 35% 30%, #a3324b, #5b1727 70%); box-shadow: inset 0 -1px 2px rgba(0,0,0,.35); }
+  .dice-total { font-family: var(--serif); font-size: 54px; font-weight: 700; line-height: 1; color: #f1dcae; text-shadow: 0 3px 16px rgba(0,0,0,.5); opacity: 0; transform: scale(.8); transition: opacity .3s, transform .3s; }
+  .dice-total.in { opacity: 1; transform: scale(1); }
+  @media (max-width: 860px) { .dice-row { gap: 30px; } .sb-btn { padding: 9px 14px; } }
+  @media (prefers-reduced-motion: reduce) { .dicefx, .dice-total, .sb-pop { transition: none; } }
 </style>
 </head>
 <body>
@@ -373,6 +432,37 @@
       <div><b class="blink">▶ ESCOLHA UM CANAL</b>Clique em um canal da lista para falar com quem estiver nele.<br>Câmera e compartilhamento de tela liberam depois que você entrar.</div>
     </div>
     <div id="grid" hidden></div>
+    <div class="dicefx" id="diceFx" aria-live="polite"></div>
+    <div class="stagebar" id="stageBar">
+      <div class="dice-group">
+        <div class="seg" id="diceSeg" role="group" aria-label="Quantidade de dados">
+          <button type="button" data-n="1" class="act">1 dado</button>
+          <button type="button" data-n="2">2 dados</button>
+        </div>
+        <button type="button" class="sb-btn" id="btnDice" title="Rolar dados">🎲 Rolar</button>
+      </div>
+      <button type="button" class="sb-btn" id="btnMusic" title="Player de áudio" aria-expanded="false">🎵 Música</button>
+      <div class="sb-pop" id="musicPop">
+        <div class="mp-title">Player de áudio</div>
+        <form class="mp-row" id="musicForm" autocomplete="off">
+          <input id="musicUrl" placeholder="Link do YouTube ou Spotify" maxlength="300" inputmode="url">
+          <button type="submit" class="pbtn">▶ Tocar</button>
+        </form>
+        <div class="mp-now" id="musicNow">Nenhuma música tocando</div>
+        <div class="mp-player" id="ytWrap"><div id="ytHost"></div></div>
+        <div class="mp-player" id="spWrap"></div>
+        <div class="mp-vol">
+          <button type="button" class="iconbtn" id="musicMute" title="Silenciar a música (só para você)">🔊</button>
+          <input type="range" id="musicVol" min="0" max="100" step="1" value="60" aria-label="Volume da música">
+          <span id="musicPct">60%</span>
+        </div>
+        <div class="mp-actions">
+          <button type="button" class="pbtn ghost" id="musicListen" hidden>▶ Ouvir</button>
+          <button type="button" class="pbtn ghost" id="musicStop" disabled>⏹ Parar para todos</button>
+        </div>
+        <div class="note" id="musicNote">A música toca para todos da sala. O volume é só seu.</div>
+      </div>
+    </div>
   </main>
 
   <section id="chat">
@@ -809,7 +899,7 @@
     watchSpeaking(pid, stream);
     updateTile(pid); updateStageHead();
   }
-  function applyDeaf() { document.querySelectorAll('#grid .tile:not([data-pid="local"]) video').forEach(v => { v.muted = me.deaf; }); }
+  function applyDeaf() { document.querySelectorAll('#grid .tile:not([data-pid="local"]) video').forEach(v => { v.muted = me.deaf; }); applyMusicVolume(); }
 
   /* =====================================================================
      CHAMADAS DE MÍDIA (somente entre quem está no mesmo canal)
@@ -910,7 +1000,7 @@
     if (!d || typeof d !== 'object') return;
     switch (d.t) {
       case 'hello':
-        if (isHost) conn.send({ t: 'welcome', peers: [...conns.keys()].filter(x => x !== pid), channels, history: chatLog.slice(-50) });
+        if (isHost) conn.send({ t: 'welcome', peers: [...conns.keys()].filter(x => x !== pid), channels, history: chatLog.slice(-50), music: currentMusic });
         else if (anchorPeer) conn.send(buildWelcome(pid));
         break;
       case 'welcome':
@@ -918,10 +1008,13 @@
           (Array.isArray(d.peers) ? d.peers : []).slice(0, 30).forEach(connectData);
           replaceChannels(d.channels);
           (Array.isArray(d.history) ? d.history : []).slice(-50).forEach(m => acceptChat(m, true));
+          if (d.music) onMusic({ ...d.music, a: 'play' }, true);
         }
         break;
       case 'state': onState(pid, d); break;
       case 'chat': acceptChat(d, false); break;
+      case 'dice': onDice(d); break;
+      case 'music': onMusic(d, false); break;
       case 'channels': mergeChannels(d.list); break;
       case 'chrename': {
         const ch = channels.find(c => c.id === cid(d.id));
@@ -966,7 +1059,7 @@
   function buildWelcome(exceptPid) {
     const ids = new Set([peer.id]);
     conns.forEach((c, id) => { if (id !== exceptPid && id !== PREFIX + roomCode) ids.add(id); });
-    return { t: 'welcome', peers: [...ids], channels, history: chatLog.slice(-50) };
+    return { t: 'welcome', peers: [...ids], channels, history: chatLog.slice(-50), music: currentMusic };
   }
   function ensureAnchor() {
     if (!peer || $('app').hidden || isHost || anchorPeer) return;
@@ -1093,6 +1186,7 @@
   function updateControls() {
     const inCh = !!me.channel;
     $('voicePanel').hidden = !inCh;
+    $('btnDice').disabled = !inCh; $('btnDice').title = inCh ? 'Rolar dados' : 'Entre em um canal para rolar os dados';
     setBtn('btnMic', me.muted ? '🔇' : '🎤', me.muted ? 'Ativar microfone' : 'Silenciar microfone', me.muted ? 'off' : '');
     setBtn('btnDeaf', me.deaf ? '🔕' : '🎧', me.deaf ? 'Ativar áudio' : 'Desativar áudio', me.deaf ? 'off' : '');
     setBtn('btnCam', '📷', cameraTrack ? 'Desligar câmera' : 'Ligar câmera', cameraTrack ? 'on' : '', !inCh);
@@ -1340,6 +1434,251 @@
     });
   }
 
+
+  /* =====================================================================
+     DADOS E PLAYER DE ÁUDIO (barra do quadro central)
+     ===================================================================== */
+  let diceN = 1, rollLock = false, fxTimer = null, fxTimer2 = null;
+  const seenDice = new Set();
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const FACE_ROT = { 1: [0, 0], 6: [0, 180], 3: [0, -90], 4: [0, 90], 2: [-90, 0], 5: [90, 0] };   // [rotX, rotY] que traz a face para a frente
+  const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+  function makeDie(v) {
+    const node = el('div', 'die3d'), cube = el('div', 'cube');
+    [1, 6, 3, 4, 2, 5].forEach(n => {
+      const f = el('div', 'face f' + n);
+      for (let i = 0; i < 9; i++) f.append(el('i', PIPS[n].includes(i) ? 'pip' : ''));
+      cube.append(f);
+    });
+    node.append(cube);
+    const [rx, ry] = FACE_ROT[v];
+    if (!REDUCED) cube.style.transform = 'rotateX(' + Math.round(Math.random() * 360) + 'deg) rotateY(' + Math.round(Math.random() * 360) + 'deg)';
+    else cube.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+    const spin = () => {
+      if (REDUCED) return;
+      cube.style.transition = 'transform 1.5s cubic-bezier(.15,.7,.2,1)';
+      cube.style.transform = 'rotateX(' + (rx + 720) + 'deg) rotateY(' + (ry + 1080) + 'deg)';
+    };
+    return { node, spin };
+  }
+  function showDice(who, values) {
+    const fx = $('diceFx');
+    clearTimeout(fxTimer); clearTimeout(fxTimer2);
+    fx.textContent = '';
+    const dice = values.map(makeDie);
+    const row = el('div', 'dice-row'); dice.forEach(d => row.append(d.node));
+    const sum = values.reduce((a, b) => a + b, 0);
+    const label = el('div', 'dice-who', who + ' rolou ' + (values.length === 1 ? '1 dado' : '2 dados'));
+    const total = el('div', 'dice-total', values.length === 2 ? values[0] + ' + ' + values[1] + ' = ' + sum : String(values[0]));
+    fx.append(label, row, total);
+    fx.classList.add('show');
+    requestAnimationFrame(() => requestAnimationFrame(() => dice.forEach(d => d.spin())));
+    setTimeout(() => total.classList.add('in'), REDUCED ? 0 : 1400);
+    fxTimer = setTimeout(() => fx.classList.remove('show'), 4800);
+    fxTimer2 = setTimeout(() => { fx.textContent = ''; }, 5300);
+  }
+  function rollDice() {
+    if (!peer) return;
+    if (!me.channel) { toast('Entre em um canal para rolar os dados.'); return; }
+    if (rollLock) return;
+    rollLock = true; setTimeout(() => { rollLock = false; }, 1800);
+    const r = new Uint32Array(diceN); crypto.getRandomValues(r);
+    const values = [...r].map(x => (x % 6) + 1);
+    const d = { t: 'dice', id: rid(), from: peer.id, name: me.name, channel: me.channel, values };
+    seenDice.add(d.id);
+    showDice('Você', values);
+    sendAll(d);
+    const sum = values.reduce((a, b) => a + b, 0);
+    sendChat('🎲 rolou ' + (values.length === 1 ? '1 dado: ' + values[0] : '2 dados: ' + values[0] + ' + ' + values[1] + ' = ' + sum));
+  }
+  function onDice(d) {
+    if (!me.channel || cid(d.channel) !== me.channel) return;
+    const id = str(d.id, 32); if (!id || seenDice.has(id)) return;
+    const vals = (Array.isArray(d.values) ? d.values : []).slice(0, 2).map(Number);
+    if (!vals.length || vals.some(v => !(v >= 1 && v <= 6) || v !== Math.floor(v))) return;
+    seenDice.add(id); if (seenDice.size > 100) seenDice.delete(seenDice.values().next().value);
+    showDice(str(d.name, 24).trim() || 'Convidado', vals);
+  }
+  document.querySelectorAll('#diceSeg button').forEach(b => {
+    b.onclick = () => { diceN = Number(b.dataset.n) === 2 ? 2 : 1; document.querySelectorAll('#diceSeg button').forEach(x => x.classList.toggle('act', x === b)); };
+  });
+  $('btnDice').onclick = rollDice;
+
+  /* ---- player de áudio (YouTube / Spotify) tocando para todos da sala ---- */
+  const MUSIC_VOL_KEY = 'gh-voz-music-vol';
+  let musicVol = 60, musicMuted = false, currentMusic = null;
+  try { const v = parseInt(localStorage.getItem(MUSIC_VOL_KEY), 10); if (v >= 0 && v <= 100) musicVol = v; } catch (e) {}
+  let ytPlayer = null, ytReady = false, ytStart = null, ytApiLoading = false; const ytCbs = [];
+  const SP_TYPES = ['track', 'album', 'playlist', 'episode', 'show', 'artist'];
+
+  function parseMusicUrl(raw) {
+    raw = str(raw, 300).trim(); if (!raw) return null;
+    const uri = raw.match(/^spotify:(track|album|playlist|episode|show|artist):([A-Za-z0-9]{10,30})$/);
+    if (uri) return { kind: 'spotify', type: uri[1], sid: uri[2] };
+    let u; try { u = new URL(/^[a-z]+:\/\//i.test(raw) ? raw : 'https://' + raw); } catch (e) { return null; }
+    const host = u.hostname.toLowerCase().replace(/^(www|m|music)\./, '');
+    if (host === 'youtu.be' || host === 'youtube.com' || host === 'youtube-nocookie.com') {
+      let id = '';
+      if (host === 'youtu.be') id = u.pathname.slice(1, 12);
+      else { id = u.searchParams.get('v') || ''; if (!id) { const m = u.pathname.match(/^\/(?:shorts|embed|live|v)\/([\w-]{11})/); if (m) id = m[1]; } }
+      const list = u.searchParams.get('list') || '';
+      id = /^[\w-]{11}$/.test(id) ? id : ''; const okList = /^[\w-]{10,64}$/.test(list) ? list : '';
+      if (!id && !okList) return null;
+      const idx = Math.max(0, Math.min(500, (parseInt(u.searchParams.get('index'), 10) || 1) - 1));
+      return { kind: 'youtube', id, list: okList, idx };
+    }
+    if (host === 'open.spotify.com') {
+      const m = u.pathname.match(/\/(track|album|playlist|episode|show|artist)\/([A-Za-z0-9]{10,30})/);
+      if (m) return { kind: 'spotify', type: m[1], sid: m[2] };
+    }
+    return null;
+  }
+  function cleanMusic(d) {
+    if (!d || typeof d !== 'object') return null;
+    const by = str(d.by, 24).trim() || 'Alguém', ts = Number(d.ts) || Date.now();
+    if (d.kind === 'youtube') {
+      const id = /^[\w-]{11}$/.test(String(d.id || '')) ? String(d.id) : '';
+      const list = /^[\w-]{10,64}$/.test(String(d.list || '')) ? String(d.list) : '';
+      if (!id && !list) return null;
+      const idx = Math.max(0, Math.min(500, parseInt(d.idx, 10) || 0));
+      return { kind: 'youtube', id, list, idx, by, ts };
+    }
+    if (d.kind === 'spotify') {
+      const type = SP_TYPES.includes(d.type) ? d.type : '';
+      const sid = /^[A-Za-z0-9]{10,30}$/.test(String(d.sid || '')) ? String(d.sid) : '';
+      if (!type || !sid) return null;
+      return { kind: 'spotify', type, sid, by, ts };
+    }
+    return null;
+  }
+  function loadYtApi(cb) {
+    if (window.YT && YT.Player) return cb();
+    ytCbs.push(cb);
+    if (ytApiLoading) return;
+    ytApiLoading = true;
+    window.onYouTubeIframeAPIReady = () => { ytCbs.splice(0).forEach(f => f()); };
+    const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api';
+    sc.onerror = () => { ytApiLoading = false; ytCbs.length = 0; toast('Não consegui carregar o player do YouTube.'); };
+    document.head.append(sc);
+  }
+  function applyMusicVolume() {
+    if (ytPlayer && ytReady) { try { ytPlayer.setVolume(me.deaf || musicMuted ? 0 : musicVol); } catch (e) {} }
+    $('musicMute').textContent = musicMuted || musicVol === 0 ? '🔇' : '🔊';
+  }
+  function setNow(text) { $('musicNow').textContent = text; }
+  function updateMusicUi() {
+    $('btnMusic').classList.toggle('live', !!currentMusic);
+    $('musicStop').disabled = !currentMusic;
+    $('musicListen').hidden = !(currentMusic && currentMusic.kind === 'youtube');
+    $('musicNote').textContent = currentMusic && currentMusic.kind === 'spotify'
+      ? 'Spotify: cada pessoa aperta ▶ no player (sem login toca só prévias de 30 s). O volume fica no próprio player.'
+      : currentMusic && currentMusic.kind === 'youtube' && ytUsesList(currentMusic)
+        ? 'Playlist do YouTube: toca em sequência para todos. Quem entra depois começa do início da lista. O volume é só seu.'
+        : 'A música toca para todos da sala. O volume é só seu.';
+  }
+  // playlist de verdade (PL…): toca a lista toda. Mix automático (RD…) com vídeo: toca só o vídeo.
+  const ytUsesList = m => !!m.list && !(m.id && /^RD/.test(m.list));
+  function playYoutube(m, offset) {
+    loadYtApi(() => {
+      const start = () => {
+        try {
+          if (ytUsesList(m)) ytPlayer.loadPlaylist({ list: m.list, listType: 'playlist', index: m.idx || 0, startSeconds: 0 });
+          else ytPlayer.loadVideoById({ videoId: m.id, startSeconds: offset });
+        } catch (e) {}
+        applyMusicVolume();
+        setTimeout(() => {
+          if (currentMusic && currentMusic.ts === m.ts && ytPlayer) {
+            let st = -1; try { st = ytPlayer.getPlayerState(); } catch (e) {}
+            if (st !== 1 && st !== 3) toast('Seu navegador pode ter bloqueado o início automático: abra 🎵 Música e toque em “Ouvir”.');
+          }
+        }, 3500);
+      };
+      if (ytPlayer && ytReady) return start();
+      ytStart = start;
+      if (ytPlayer) return;
+      ytPlayer = new YT.Player('ytHost', {
+        width: '100%', height: '100%',
+        playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
+        events: {
+          onReady: () => { ytReady = true; const f = ytStart; ytStart = null; if (f) f(); },
+          onStateChange: e => {
+            if (e.data === 1 && currentMusic && currentMusic.kind === 'youtube') {
+              let t = ''; try { t = ytPlayer.getVideoData().title || ''; } catch (x) {}
+              if (t) setNow('YouTube · ' + t + ' · por ' + currentMusic.by);
+            }
+          },
+          onError: () => toast('Esse vídeo não pode ser tocado aqui (pode ter a reprodução incorporada bloqueada).')
+        }
+      });
+    });
+  }
+  function stopMusicLocal() {
+    try { if (ytPlayer && ytReady) ytPlayer.stopVideo(); } catch (e) {}
+    ytStart = null;
+    $('ytWrap').classList.remove('on'); $('spWrap').classList.remove('on'); $('spWrap').textContent = '';
+    currentMusic = null; setNow('Nenhuma música tocando'); updateMusicUi();
+  }
+  function playMusic(m, late) {
+    currentMusic = m;
+    if (m.kind === 'youtube') {
+      $('spWrap').classList.remove('on'); $('spWrap').textContent = '';
+      $('ytWrap').classList.add('on');
+      setNow('YouTube · por ' + m.by);
+      const secs = (Date.now() - m.ts) / 1000;
+      playYoutube(m, late && m.id && !ytUsesList(m) && secs > 5 && secs < 14400 ? Math.floor(secs) : 0);
+    } else {
+      try { if (ytPlayer && ytReady) ytPlayer.stopVideo(); } catch (e) {}
+      ytStart = null; $('ytWrap').classList.remove('on');
+      const f = document.createElement('iframe');
+      f.src = 'https://open.spotify.com/embed/' + m.type + '/' + m.sid + '?utm_source=generator&theme=0';
+      f.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+      f.title = 'Spotify';
+      f.style.height = (m.type === 'track' || m.type === 'episode') ? '152px' : '352px';   // playlist/álbum: mostra a lista de faixas
+      $('spWrap').textContent = ''; $('spWrap').append(f); $('spWrap').classList.add('on');
+      setNow('Spotify · por ' + m.by);
+    }
+    updateMusicUi();
+  }
+  function onMusic(d, late) {
+    if (d && d.a === 'stop') {
+      if (currentMusic) { stopMusicLocal(); sysMsg('⏹ ' + (str(d.by, 24).trim() || 'Alguém') + ' parou a música'); }
+      return;
+    }
+    const m = cleanMusic(d); if (!m) return;
+    if (currentMusic && currentMusic.ts === m.ts && currentMusic.by === m.by) return;
+    playMusic(m, !!late);
+    if (!late) sysMsg('🎵 ' + m.by + ' colocou uma música (' + (m.kind === 'youtube' ? 'YouTube' : 'Spotify') + ')');
+  }
+  function openMusicPop(open) {
+    $('musicPop').classList.toggle('open', open); $('btnMusic').setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) setTimeout(() => { try { $('musicUrl').focus({ preventScroll: true }); } catch (e) {} }, 120);
+  }
+  const closeMusicPop = () => openMusicPop(false);
+  $('btnMusic').onclick = e => { e.stopPropagation(); openMusicPop(!$('musicPop').classList.contains('open')); };
+  document.addEventListener('click', e => { if ($('musicPop').classList.contains('open') && !e.target.closest('#musicPop, #btnMusic')) closeMusicPop(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMusicPop(); });
+  $('musicForm').onsubmit = e => {
+    e.preventDefault(); if (!peer) return;
+    const m = parseMusicUrl($('musicUrl').value);
+    if (!m) { toast('Link não reconhecido. Use um link do YouTube ou do Spotify.'); return; }
+    m.by = me.name; m.ts = Date.now();
+    $('musicUrl').value = '';
+    playMusic(m, false);
+    sysMsg('🎵 Você colocou uma música (' + (m.kind === 'youtube' ? 'YouTube' : 'Spotify') + ')');
+    sendAll({ t: 'music', a: 'play', ...m });
+  };
+  $('musicStop').onclick = () => { if (!currentMusic) return; stopMusicLocal(); sendAll({ t: 'music', a: 'stop', by: me.name }); };
+  $('musicListen').onclick = () => { try { if (ytPlayer && ytReady) { ytPlayer.playVideo(); applyMusicVolume(); } } catch (e) {} };
+  $('musicMute').onclick = () => { musicMuted = !musicMuted; applyMusicVolume(); };
+  $('musicVol').value = String(musicVol); $('musicPct').textContent = musicVol + '%';
+  $('musicVol').oninput = () => {
+    musicVol = Math.max(0, Math.min(100, Number($('musicVol').value) || 0)); musicMuted = false;
+    $('musicPct').textContent = musicVol + '%';
+    try { localStorage.setItem(MUSIC_VOL_KEY, String(musicVol)); } catch (e) {}
+    applyMusicVolume();
+  };
+  applyMusicVolume();
+
   function cleanup() {
     clearTimeout(connTimer); clearTimeout(anchorTimer);
     killScreen(); stopComposite();
@@ -1360,6 +1699,7 @@
     me.channel = null; me.muted = false; me.deaf = false;
     $('grid').textContent = ''; $('msgs').textContent = ''; $('channels').textContent = ''; $('idle').textContent = '';
     closeSettings();
+    stopMusicLocal(); closeMusicPop(); clearTimeout(fxTimer); clearTimeout(fxTimer2); $('diceFx').classList.remove('show'); $('diceFx').textContent = ''; seenDice.clear(); rollLock = false;
     $('app').hidden = true; $('lobby').hidden = false;
     document.title = BASE_TITLE; lockLobby(false);
   }
