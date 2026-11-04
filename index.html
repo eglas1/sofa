@@ -3,15 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>🎮 Salas de Voz</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎮%3C/text%3E%3C/svg%3E">
+<title>🍷 Salas de Voz</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍷%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a1f; --side: #14143a; --main: #0f0f2d; --hover: #24246a; --line: #000;
-    --text: #f4f4ff; --muted: #9a9ad0; --accent: #ff2e97; --green: #39ff88; --red: #ff3b4e; --field: #07071a;
+    color-scheme: light;
+    --bg: #f6efe3; --side: #fbf7ef; --main: #f6efe3; --hover: #ece1cf; --line: #e3d6c0;
+    --text: #3a1620; --muted: #8a6f6a; --accent: #5b1727; --green: #2f7d57; --red: #a3262f; --field: #fffdf8;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -39,7 +40,7 @@
   #lobbyMsg { color: #ff8a8e; font-size: 13px; margin-top: 14px; min-height: 18px; }
 
   /* ---------- APP ---------- */
-  #app { height: 100vh; height: 100dvh; display: grid; grid-template-columns: 260px minmax(0, 1fr) 330px; }
+  #app { height: 100vh; height: 100dvh; display: grid; grid-template-columns: 300px minmax(0, 1fr) 330px; }
   #side { background: var(--side); display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); }
   .side-head { padding: 14px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .side-head small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
@@ -90,6 +91,20 @@
   .ctl.on { background: #1d4430; color: #7ee2b0; }
   .ctl.hang { background: var(--red); color: #fff; }
   .ctl:disabled { opacity: .35; cursor: not-allowed; filter: none; }
+
+  /* painel de voz + botões ao lado do nome (estilo Discord) */
+  .voicepanel { padding: 10px; background: #1e1f22; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+  .vp-title { font-size: 12px; font-weight: 700; color: var(--green); }
+  .vp-btns { display: flex; gap: 6px; }
+  .vp-btns .vbtn { flex: 1; }
+  .vbtn { border: 0; border-radius: 8px; height: 34px; min-width: 34px; padding: 0 8px; font-size: 16px; background: var(--hover); color: #fff; display: grid; place-items: center; }
+  .vbtn.vmini { width: 30px; min-width: 30px; height: 30px; padding: 0; font-size: 15px; flex: none; }
+  .vbtn:hover { filter: brightness(1.2); }
+  .vbtn.off { background: #4a2528; color: #ff9a9e; }
+  .vbtn.on { background: #1d4430; color: #7ee2b0; }
+  .vbtn.hang { background: var(--red); color: #fff; }
+  .vbtn:disabled { opacity: .35; cursor: not-allowed; filter: none; }
+  .voicepanel .campos { justify-content: space-between; }
 
   #chat { background: var(--side); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
   .chat-head { padding: 13px 16px; border-bottom: 1px solid var(--line); font-weight: 600; }
@@ -143,113 +158,126 @@
   }
 
   /* =====================================================================
-     TEMA GAME (arcade retrô)
+     TEMA LUXO — vinho e creme
      ===================================================================== */
-  :root { --cyan: #00e5ff; --yellow: #ffd400; --edge: #3d3d9a;
-          --px: 'Press Start 2P', ui-monospace, Menlo, Consolas, monospace;
-          --vt: 'VT323', ui-monospace, Menlo, Consolas, monospace; }
-  body { font-family: var(--vt); font-size: 20px; background-color: var(--bg);
-         background-image: linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
-         background-size: 32px 32px; }
-  body::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 50;
-         background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.16) 3px, rgba(0,0,0,0) 4px); }
-  @keyframes blink { 50% { opacity: 0; } }
-  @keyframes pulse { 50% { box-shadow: 0 0 0 2px var(--green), 0 0 26px var(--green); } }
-  .blink { animation: blink 1.1s steps(2, start) infinite; }
+  :root { --wine: #5b1727; --wine-deep: #3d0e1a; --cream: #f6efe3; --cream-2: #fbf7ef; --gold: #d8bf93; --gold-dark: #8c6d34;
+          --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; }
+  body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 15px; background: var(--bg); -webkit-font-smoothing: antialiased; }
+  .blink { animation: none; }
+  ::selection { background: var(--wine); color: var(--cream); }
 
   /* lobby */
-  .card { border: 4px solid var(--cyan); border-radius: 0; box-shadow: 0 0 0 4px #000, 10px 10px 0 4px var(--accent); }
-  .card h1 { font-family: var(--px); font-size: 18px; line-height: 1.5; color: var(--yellow); text-shadow: 3px 3px 0 var(--accent); margin-bottom: 12px; }
-  .card p.sub { font-size: 22px; line-height: 1; color: var(--cyan); }
-  .card label { font-family: var(--px); font-size: 8px; line-height: 1.6; letter-spacing: 0; color: var(--yellow); }
-  .card input, #addChForm input, #chatInput, #dlgInput { border-radius: 0; border: 3px solid var(--edge); background: var(--field); color: var(--green); font-family: var(--vt); font-size: 22px; }
-  .card input:focus, #addChForm input:focus, #chatInput:focus, #dlgInput:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,.5); }
-  #newcode { text-transform: lowercase; }
-  .btn { border-radius: 0; font-family: var(--px); font-size: 10px; line-height: 1.5; text-transform: uppercase; background: var(--accent); box-shadow: 0 5px 0 #8f0f55, 0 0 0 3px #000; }
-  .btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 #8f0f55, 0 0 0 3px #000; }
-  .btn.secondary { background: var(--cyan); color: #00252b; box-shadow: 0 5px 0 #007c8c, 0 0 0 3px #000; }
-  .btn.secondary:active:not(:disabled) { box-shadow: 0 1px 0 #007c8c, 0 0 0 3px #000; }
-  .btn.danger { background: var(--red); color: #fff; box-shadow: 0 5px 0 #8a1020, 0 0 0 3px #000; }
-  .divider { font-family: var(--px); font-size: 8px; color: var(--muted); }
-  #lobbyMsg { font-size: 21px; line-height: 1; color: var(--yellow); }
+  #lobby { background: radial-gradient(ellipse at 50% 0%, #fffaf0 0%, #f6efe3 55%, #eadcc4 100%); }
+  .card { background: var(--cream-2); border: 1px solid var(--line); border-radius: 18px; padding: 36px 32px; box-shadow: 0 24px 60px rgba(91,23,39,.14), 0 2px 0 var(--gold) inset; }
+  .card h1 { font-family: var(--serif); font-weight: 600; font-size: 36px; line-height: 1.1; color: var(--wine); letter-spacing: .01em; margin-bottom: 8px; }
+  .card p.sub { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .card label { font-size: 11px; font-weight: 600; letter-spacing: .14em; color: var(--gold-dark); }
+  .card input, #addChForm input, #chatInput, #dlgInput { border-radius: 8px; border: 1px solid var(--line); background: var(--field); color: var(--text); font-family: inherit; font-size: 15px; transition: border-color .15s, box-shadow .15s; }
+  .card input::placeholder, #chatInput::placeholder, #dlgInput::placeholder { color: #b7a39a; }
+  .card input:focus, #chatInput:focus, #dlgInput:focus { border-color: var(--wine); box-shadow: 0 0 0 3px rgba(91,23,39,.12); }
+  .btn { border-radius: 8px; background: var(--wine); color: var(--cream); font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 6px 16px rgba(91,23,39,.25); transition: background .15s, transform .1s; }
+  .btn:hover:not(:disabled) { filter: none; background: #721d33; }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn.secondary { background: transparent; color: var(--wine); border: 1px solid var(--wine); box-shadow: none; }
+  .btn.secondary:hover:not(:disabled) { background: var(--wine); color: var(--cream); }
+  .btn.danger { background: var(--red); color: #fff; box-shadow: none; }
+  .divider { color: var(--muted); font-size: 12px; letter-spacing: .08em; }
+  #lobbyMsg { color: var(--red); font-size: 13px; }
 
-  /* barra lateral */
-  #side { border-right: 4px solid #000; box-shadow: inset -3px 0 0 var(--edge); }
-  .side-head, .stage-head, .chat-head { background: #0b0b2a; border-bottom: 4px solid #000; font-family: var(--px); font-size: 10px; line-height: 1.5; color: var(--yellow); }
-  .side-head b { font-weight: 400; }
-  .side-head small { font-family: var(--vt); font-size: 19px; color: var(--cyan); margin-top: 4px; }
-  #roomLabel { color: var(--green); letter-spacing: 1px; }
-  .smallbtn { border-radius: 0; font-family: var(--px); font-size: 8px; padding: 8px; background: var(--cyan); color: #00252b; box-shadow: 0 3px 0 #007c8c, 0 0 0 2px #000; }
-  .smallbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #007c8c, 0 0 0 2px #000; }
-  .sec-title { font-family: var(--px); font-size: 8px; letter-spacing: 0; color: var(--cyan); }
-  .iconbtn { border-radius: 0; color: var(--text); }
-  .iconbtn:hover { background: var(--accent); }
-  .ch-title { border-radius: 0; border: 2px solid transparent; font-size: 22px; color: var(--text); }
-  .ch-title:hover { background: var(--hover); border-color: var(--cyan); }
-  .channel.active .ch-title { background: var(--accent); border-color: #000; box-shadow: 3px 3px 0 #000; color: #fff; }
+  /* barra lateral (vinho) */
+  #side { --text: #f7efe2; --muted: #d9bfb6; --hover: rgba(247,239,226,.12); --line: rgba(247,239,226,.14); --field: rgba(0,0,0,.28); --green: #9bd9b3;
+          background: var(--wine); color: var(--text); border-right: 0; box-shadow: 4px 0 24px rgba(61,14,26,.18); z-index: 2; }
+  .side-head { border-bottom: 1px solid var(--line); padding: 18px 16px; }
+  .side-head b { font-family: var(--serif); font-size: 24px; font-weight: 600; letter-spacing: .02em; color: var(--cream); }
+  .side-head small { color: var(--gold); font-size: 12px; letter-spacing: .04em; }
+  #roomLabel { color: var(--cream); letter-spacing: .08em; font-weight: 600; }
+  .smallbtn { background: transparent; color: var(--cream); border: 1px solid rgba(247,239,226,.35); border-radius: 6px; font-size: 12px; letter-spacing: .04em; }
+  .smallbtn:hover { filter: none; background: var(--cream); color: var(--wine); }
+  .sec-title { font-size: 11px; font-weight: 600; letter-spacing: .16em; color: var(--gold); }
+  .iconbtn { color: var(--muted); border-radius: 6px; }
+  .iconbtn:hover { background: var(--hover); color: var(--cream); }
+  #addChForm input { border: 1px solid rgba(247,239,226,.35); color: var(--cream); }
+  #addChForm input::placeholder { color: rgba(247,239,226,.5); }
+  #addChForm input:focus { border-color: var(--gold); box-shadow: none; }
+  .ch-title { border-radius: 8px; color: var(--text); font-size: 15px; transition: background .15s; }
+  .ch-title:hover { background: var(--hover); color: var(--cream); }
+  .channel.active .ch-title { background: var(--cream); color: var(--wine); font-weight: 600; }
+  .channel.active .ch-count { background: var(--wine); color: var(--cream); }
   .ch-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ch-count { border-radius: 0; margin-left: 0; padding: 3px 5px; font-family: var(--px); font-size: 8px; background: var(--yellow); color: #000; }
+  .ch-count { border-radius: 10px; margin-left: 0; padding: 1px 8px; font-size: 11px; font-weight: 600; background: rgba(0,0,0,.28); color: var(--cream); }
   .ch-actions { display: none; gap: 2px; }
   .ch-title:hover .ch-actions, .channel.active .ch-actions { display: flex; }
   @media (hover: none) { .ch-actions { display: flex; } }
-  .mini { background: none; border: 0; padding: 0 3px; font-size: 15px; line-height: 1; }
-  .mini:hover { transform: scale(1.25); }
-  .member { font-size: 21px; color: var(--text); }
+  .mini { background: none; border: 0; padding: 0 3px; font-size: 14px; line-height: 1; }
+  .mini:hover { transform: scale(1.2); }
+  .member { color: var(--text); font-size: 14px; }
   .member.idle { color: var(--muted); }
   .member .nm { cursor: pointer; }
-  .member .nm:hover { color: var(--yellow); text-decoration: underline; }
-  .av { border-radius: 0; width: 28px; height: 28px; border: 2px solid #000; font-family: var(--px); font-size: 10px; }
-  .speaking .av { box-shadow: 0 0 0 3px var(--green), 0 0 12px var(--green); }
-  .userbar { background: #0b0b2a; border-top: 4px solid #000; }
-  .ub-info div { font-family: var(--px); font-size: 9px; line-height: 1.5; color: var(--text); }
-  .ub-info small { font-size: 19px; color: var(--green); }
+  .member .nm:hover { color: var(--gold); text-decoration: underline; }
+  .av { width: 28px; height: 28px; border: 1px solid rgba(247,239,226,.45); font-size: 12px; font-weight: 600; letter-spacing: 0; }
+  .speaking .av { box-shadow: 0 0 0 2px var(--green); }
+  .voicepanel { background: rgba(0,0,0,.22); border-top: 1px solid var(--line); }
+  .vp-title { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--green); }
+  .vbtn { border-radius: 8px; background: var(--hover); color: var(--cream); transition: background .15s; }
+  .vbtn:hover:not(:disabled) { filter: none; background: rgba(247,239,226,.22); }
+  .vbtn.off { background: rgba(224,96,108,.28); color: #ffc1c5; }
+  .vbtn.on { background: rgba(155,217,179,.22); color: #c4f0d4; }
+  .vbtn.hang { background: #a3262f; color: #fff; }
+  .vbtn.hang:hover:not(:disabled) { background: #bb2f39; }
+  .campos { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .06em; color: var(--muted); }
+  .corners { display: grid; grid-template-columns: repeat(4, 28px); gap: 4px; }
+  .corners button { height: 24px; border: 1px solid var(--line); border-radius: 5px; background: var(--hover); color: var(--cream); font-size: 13px; line-height: 1; }
+  .corners button:hover { border-color: var(--gold); }
+  .corners button.act { background: var(--cream); color: var(--wine); border-color: var(--cream); }
+  .userbar { background: var(--wine-deep); border-top: 1px solid var(--line); gap: 6px; }
+  .ub-info div { font-size: 14px; font-weight: 600; color: var(--cream); }
+  .ub-info small { color: var(--gold); font-size: 12px; }
 
-  /* palco */
-  #empty { font-size: 23px; line-height: 1.1; color: var(--cyan); }
-  #empty b { font-family: var(--px); font-size: 14px; line-height: 1.6; color: var(--yellow); margin-bottom: 14px; }
-  .tile { border-radius: 0; background: #05051a; border: 4px solid #000; box-shadow: 0 0 0 2px var(--edge); }
-  .tile.speaking { border-color: var(--green); box-shadow: 0 0 0 2px var(--green), 0 0 18px var(--green); animation: pulse 1.2s steps(2) infinite; }
-  .tile .avatar { background: #0a0a26; }
-  .avatar span { border-radius: 0; border: 4px solid #000; font-family: var(--px); font-size: 28px; }
-  .tile .label { border-radius: 0; border: 2px solid #000; background: rgba(0,0,0,.8); font-size: 20px; color: var(--yellow); cursor: pointer; }
-  .tile .label:hover { background: var(--accent); color: #fff; }
-  .tile .badges { border-radius: 0; border: 2px solid #000; background: rgba(0,0,0,.8); }
-  .tile .hint { border-radius: 0; font-size: 16px; }
-  .controls { background: #0b0b2a; border-top: 4px solid #000; gap: 12px; }
-  .ctl { border-radius: 0; font-family: var(--px); font-size: 9px; line-height: 1.5; padding: 12px; background: var(--hover); color: #fff; box-shadow: 0 4px 0 #0a0a3a, 0 0 0 2px #000; }
-  .ctl:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #0a0a3a, 0 0 0 2px #000; }
-  .ctl.off { background: #7a1226; color: #ffc2cb; }
-  .ctl.on { background: #0f5a2f; color: #c4ffdc; }
-  .ctl.hang { background: var(--red); color: #fff; }
+  /* palco (creme) */
+  .stage-head, .chat-head { background: var(--cream-2); border-bottom: 1px solid var(--line); font-family: var(--serif); font-size: 21px; font-weight: 600; letter-spacing: .01em; color: var(--wine); padding: 14px 20px; }
+  #empty { color: var(--muted); font-size: 15px; line-height: 1.6; }
+  #empty b { font-family: var(--serif); font-size: 30px; font-weight: 600; letter-spacing: .01em; color: var(--wine); margin-bottom: 10px; }
+  #grid { gap: 14px; padding: 18px; }
+  .tile { background: #2b0d16; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgba(91,23,39,.14); transition: box-shadow .15s, border-color .15s; }
+  .tile.speaking { border-color: var(--green); box-shadow: 0 0 0 2px var(--green), 0 8px 24px rgba(91,23,39,.18); }
+  .tile .avatar { background: linear-gradient(160deg, #4a1424, #2b0d16); }
+  .avatar span { font-family: var(--serif); font-size: 40px; font-weight: 600; border: 0; box-shadow: 0 0 0 3px rgba(246,239,227,.3); }
+  .tile .label, .tile .badges, .tile .hint { background: rgba(43,13,22,.72); color: var(--cream); backdrop-filter: blur(6px); }
+  .tile .label { font-size: 13px; cursor: pointer; }
+  .tile .label:hover { background: var(--wine); }
+  .tile .hint { color: #e8d9c4; }
 
   /* chat */
-  #chat { border-left: 4px solid #000; box-shadow: inset 3px 0 0 var(--edge); }
-  .msg .mh { font-size: 17px; color: var(--cyan); }
-  .msg .mh b { font-family: var(--px); font-size: 8px; font-weight: 400; color: var(--yellow); }
-  .msg .mb { border-radius: 0; border: 2px solid #000; background: var(--hover); font-size: 21px; line-height: 1.05; }
-  .msg.mine .mb { background: var(--accent); }
-  .msg .mb a { color: var(--cyan); }
-  .msg.mine .mb a { color: #fff; }
-  .sys { font-size: 18px; color: var(--green); }
-  .sys::before { content: '★ '; color: var(--yellow); }
-  #chatForm button { border-radius: 0; font-family: var(--px); font-size: 8px; background: var(--green); color: #002d12; box-shadow: 0 3px 0 #17803f, 0 0 0 2px #000; }
+  #chat { background: var(--cream-2); border-left: 1px solid var(--line); }
+  .msg .mh { color: var(--muted); font-size: 12px; }
+  .msg .mh b { color: var(--wine); font-weight: 600; }
+  .msg .mb { background: #efe3cf; color: var(--text); border-radius: 14px 14px 14px 4px; }
+  .msg.mine .mb { background: var(--wine); color: var(--cream); border-radius: 14px 14px 4px 14px; }
+  .msg .mb a { color: #7a2336; text-decoration: underline; }
+  .msg.mine .mb a { color: var(--cream); }
+  .sys { color: var(--muted); font-style: italic; }
+  #chatForm { background: var(--cream-2); }
+  #chatForm button { background: var(--wine); color: var(--cream); border-radius: 8px; font-size: 13px; letter-spacing: .04em; }
+  #chatForm button:hover { background: #721d33; }
 
   /* configurações, avisos, abas do celular */
-  .modal { border-radius: 0; border: 4px solid var(--cyan); box-shadow: 0 0 0 4px #000, 8px 8px 0 4px var(--accent); font-size: 20px; }
-  .modal h2 { font-family: var(--px); font-size: 12px; line-height: 1.5; color: var(--yellow); }
-  .modal h3 { font-family: var(--px); font-size: 9px; letter-spacing: 0; color: var(--cyan); }
-  .field { font-size: 20px; }
-  .field select { border-radius: 0; border: 2px solid var(--edge); font-size: 19px; }
-  .presets button { border-radius: 0; border: 3px solid #000; font-family: var(--px); font-size: 8px; line-height: 1.5; box-shadow: 0 3px 0 #0a0a3a; }
-  .presets button:hover { border-color: var(--yellow); }
-  .presets small { font-family: var(--vt); font-size: 17px; }
-  #stats { border-radius: 0; border: 2px solid var(--edge); font-family: var(--vt); font-size: 19px; color: var(--green); }
-  .note { font-size: 17px; line-height: 1; }
-  #toast { border-radius: 0; background: #000; border: 3px solid var(--yellow); font-family: var(--vt); font-size: 21px; color: var(--yellow); }
-  #mtabs { background: #0b0b2a; border-top: 4px solid #000; }
-  #mtabs button { font-family: var(--px); font-size: 8px; }
-  #mtabs button.act { color: var(--yellow); box-shadow: inset 0 3px 0 var(--accent); }
-  #mtabs .badge { border-radius: 0; }
+  .overlay { background: rgba(61,14,26,.45); backdrop-filter: blur(3px); }
+  .modal { background: var(--cream-2); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 30px 80px rgba(61,14,26,.35); }
+  .modal h2 { font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--wine); }
+  .modal h3 { font-size: 11px; font-weight: 600; letter-spacing: .16em; color: var(--gold-dark); border-top: 1px solid var(--line); padding-top: 16px; }
+  .field { font-size: 14px; }
+  .field select { border-radius: 6px; border: 1px solid var(--line); background: var(--field); color: var(--text); }
+  .field input[type=checkbox] { accent-color: var(--wine); }
+  .presets button { background: var(--field); border: 1px solid var(--line); border-radius: 10px; color: var(--text); }
+  .presets button:hover { border-color: var(--wine); background: #fff; }
+  .presets small { color: var(--muted); }
+  #stats { background: var(--field); border: 1px solid var(--line); border-radius: 8px; color: var(--text); }
+  .note { color: var(--muted); }
+  #toast { background: var(--wine-deep); color: var(--cream); border-radius: 10px; box-shadow: 0 10px 30px rgba(61,14,26,.35); }
+  #mtabs { background: var(--wine-deep); border-top: 1px solid rgba(247,239,226,.14); }
+  #mtabs button { color: #d9bfb6; font-size: 13px; letter-spacing: .02em; }
+  #mtabs button.act { color: var(--cream); box-shadow: inset 0 2px 0 var(--gold); }
+  #mtabs .badge { background: var(--gold); color: var(--wine-deep); font-weight: 700; }
 
   /* diálogo (renomear / excluir) e controle de volume */
   #dialog { z-index: 35; }
@@ -257,19 +285,18 @@
   #dlgInput { width: 100%; padding: 10px 12px; margin-top: 12px; outline: none; }
   .dlg-btns { display: flex; gap: 12px; }
   .dlg-btns .btn { margin-top: 18px; }
-  #volpop { position: fixed; z-index: 40; width: 240px; padding: 12px; background: var(--side); border: 3px solid var(--cyan); box-shadow: 0 0 0 3px #000, 6px 6px 0 3px var(--accent); }
-  #volpop .vp-name { font-family: var(--px); font-size: 9px; line-height: 1.6; color: var(--yellow); margin-bottom: 10px; word-break: break-word; }
-  #volpop input[type=range] { width: 100%; accent-color: var(--green); }
-  #volpop .vp-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 22px; color: var(--green); }
-  .campos { display: flex; align-items: center; gap: 8px; font-family: var(--px); font-size: 8px; color: var(--yellow); }
-  .corners { display: grid; grid-template-columns: repeat(2, 32px); gap: 3px; }
-  .corners button { height: 24px; border: 2px solid #000; border-radius: 0; background: var(--hover); color: #fff; font-size: 14px; line-height: 1; }
-  .corners button:hover { border-color: var(--yellow); }
-  .corners button.act { background: var(--accent); }
+  #volpop { position: fixed; z-index: 40; width: 240px; padding: 14px; background: var(--cream-2); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 16px 40px rgba(61,14,26,.28); }
+  #volpop .vp-name { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--wine); margin-bottom: 10px; word-break: break-word; }
+  #volpop input[type=range] { width: 100%; accent-color: var(--wine); }
+  #volpop .vp-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+  /* barras de rolagem discretas */
+  * { scrollbar-width: thin; scrollbar-color: rgba(138,111,106,.4) transparent; }
+  #side * { scrollbar-color: rgba(247,239,226,.3) transparent; }
+
   /* em tela cheia: sem moldura de "falando" em volta do vídeo */
-  .tile:fullscreen, .tile:fullscreen.speaking { border: 0; box-shadow: none; animation: none; }
-  .tile:-webkit-full-screen, .tile:-webkit-full-screen.speaking { border: 0; box-shadow: none; animation: none; }
-  @media (prefers-reduced-motion: reduce) { .blink, .tile.speaking { animation: none; } }
+  .tile:fullscreen, .tile:fullscreen.speaking { border: 0; box-shadow: none; border-radius: 0; }
+  .tile:-webkit-full-screen, .tile:-webkit-full-screen.speaking { border: 0; box-shadow: none; border-radius: 0; }
 </style>
 </head>
 <body>
@@ -277,7 +304,7 @@
 <!-- ================= LOBBY ================= -->
 <div id="lobby">
   <div class="card">
-    <h1>🎮 Salas de Voz</h1>
+    <h1>🍷 Salas de Voz</h1>
     <p class="sub"><span class="blink">▶ PRESS START</span><br>Monte sua sala, chame o time e fale em canais de voz. Chat, vídeo e tela compartilhada direto no navegador.</p>
 
     <label for="name">🕹️ Jogador 1 · seu nome</label>
@@ -313,9 +340,28 @@
       <div class="sec-title"><span>No lobby (sem canal)</span></div>
       <div id="idle"></div>
     </div>
+    <div class="voicepanel" id="voicePanel" hidden>
+      <div class="vp-title">📶 Voz conectada</div>
+      <div class="vp-btns">
+        <button class="vbtn" id="btnCam" title="Câmera">📷</button>
+        <button class="vbtn" id="btnScreen" title="Compartilhar tela">🖥️</button>
+        <button class="vbtn hang" id="btnDisc" title="Desconectar">📞</button>
+      </div>
+      <div class="campos" id="camPos" hidden title="Canto da câmera na tela compartilhada">
+        <span>📍 Câmera</span>
+        <div class="corners">
+          <button data-corner="tl" title="Superior esquerdo">↖</button>
+          <button data-corner="tr" title="Superior direito">↗</button>
+          <button data-corner="bl" title="Inferior esquerdo">↙</button>
+          <button data-corner="br" title="Inferior direito">↘</button>
+        </div>
+      </div>
+    </div>
     <div class="userbar">
       <div class="av" id="ubAv"></div>
       <div class="ub-info"><div id="ubName"></div><small id="ubStatus"></small></div>
+      <button class="vbtn vmini" id="btnMic" title="Microfone">🎤</button>
+      <button class="vbtn vmini" id="btnDeaf" title="Áudio">🎧</button>
       <button class="iconbtn" id="btnSettings" title="Configurações e qualidade">⚙️</button>
       <button class="iconbtn" id="btnExit" title="Sair da sala">🚪</button>
     </div>
@@ -327,22 +373,6 @@
       <div><b class="blink">▶ ESCOLHA UM CANAL</b>Clique em um canal da lista para falar com quem estiver nele.<br>Câmera e compartilhamento de tela liberam depois que você entrar.</div>
     </div>
     <div id="grid" hidden></div>
-    <div class="controls">
-      <button class="ctl" id="btnMic">🎤 Microfone</button>
-      <button class="ctl" id="btnDeaf">🎧 Áudio</button>
-      <button class="ctl" id="btnCam">📷 Câmera</button>
-      <button class="ctl" id="btnScreen">🖥️ Compartilhar tela</button>
-      <div class="campos" id="camPos" hidden title="Canto da câmera na tela compartilhada">
-        <span>📍 Câmera</span>
-        <div class="corners">
-          <button data-corner="tl" title="Superior esquerdo">↖</button>
-          <button data-corner="tr" title="Superior direito">↗</button>
-          <button data-corner="bl" title="Inferior esquerdo">↙</button>
-          <button data-corner="br" title="Inferior direito">↘</button>
-        </div>
-      </div>
-      <button class="ctl hang" id="btnDisc">📞 Desconectar</button>
-    </div>
   </main>
 
   <section id="chat">
@@ -445,7 +475,7 @@
     { id: 'reuniao', name: 'Reunião' },
     { id: 'lounge', name: 'Lounge' }
   ];
-  const BASE_TITLE = '🎮 Salas de Voz';
+  const BASE_TITLE = '🍷 Salas de Voz';
 
   const DEFAULTS = {
     screen: { res: '1080', fps: 30, hint: 'detail', kbps: 0, audio: false },
@@ -470,7 +500,8 @@
   const cid = v => str(v, 20).replace(/[^a-zA-Z0-9_-]/g, '');
   const isMobile = () => window.matchMedia('(max-width: 860px)').matches;
   const initial = n => (String(n).trim()[0] || '?').toUpperCase();
-  function colorFor(name) { let h = 0; for (const c of String(name)) h = (h * 31 + c.charCodeAt(0)) % 360; return 'hsl(' + h + ' 55% 45%)'; }
+  const LUXO = ['#5b1727', '#7a2336', '#8c3b4a', '#a1624b', '#8c6d34', '#5a4a42', '#6e3a4d', '#4a2a35'];
+  function colorFor(name) { let h = 0; for (const c of String(name)) h = (h * 31 + c.charCodeAt(0)) % 360; return LUXO[h % LUXO.length]; }
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 3200); }
   function lobbyMsg(m) { $('lobbyMsg').textContent = m || ''; }
   function randomCode() { const c = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = ''; for (let i = 0; i < 6; i++) s += c[Math.floor(Math.random() * c.length)]; return s; }
@@ -613,7 +644,7 @@
       const c = settings.cam.corner || 'br';
       const x = c[1] === 'l' ? m : w - pw - m;
       const y = c[0] === 't' ? m : h - ph - m;
-      compCtx.fillStyle = '#ff2e97'; compCtx.fillRect(x - b, y - b, pw + 2 * b, ph + 2 * b);
+      compCtx.fillStyle = '#5b1727'; compCtx.fillRect(x - b, y - b, pw + 2 * b, ph + 2 * b);
       compCtx.drawImage(cv, x, y, pw, ph);
     }
   }
@@ -1058,14 +1089,15 @@
     $('stageTitle').textContent = me.channel ? '🔊 ' + channelName(me.channel) + ' · ' + n + (n === 1 ? ' jogador' : ' jogadores') : 'Chamada';
     $('empty').hidden = !!me.channel; $('grid').hidden = !me.channel;
   }
-  function setBtn(id, text, cls, disabled) { const b = $(id); b.textContent = text; b.className = 'ctl' + (id === 'btnDisc' ? ' hang' : '') + (cls ? ' ' + cls : ''); b.disabled = !!disabled; }
+  function setBtn(id, icon, title, cls, disabled) { const b = $(id); b.textContent = icon; b.title = title; b.className = 'vbtn' + (id === 'btnMic' || id === 'btnDeaf' ? ' vmini' : '') + (id === 'btnDisc' ? ' hang' : '') + (cls ? ' ' + cls : ''); b.disabled = !!disabled; }
   function updateControls() {
     const inCh = !!me.channel;
-    setBtn('btnMic', me.muted ? '🔇 Mudo' : '🎤 Microfone', me.muted ? 'off' : '');
-    setBtn('btnDeaf', me.deaf ? '🎧⛔ Sem áudio' : '🎧 Áudio', me.deaf ? 'off' : '');
-    setBtn('btnCam', cameraTrack ? '📷 Desligar câmera' : '📷 Câmera', cameraTrack ? 'on' : '', !inCh);
-    setBtn('btnScreen', screenTrack ? '⏹️ Parar tela' : '🖥️ Compartilhar tela', screenTrack ? 'on' : '', !inCh);
-    setBtn('btnDisc', '📞 Desconectar', '', !inCh);
+    $('voicePanel').hidden = !inCh;
+    setBtn('btnMic', me.muted ? '🔇' : '🎤', me.muted ? 'Ativar microfone' : 'Silenciar microfone', me.muted ? 'off' : '');
+    setBtn('btnDeaf', me.deaf ? '🔕' : '🎧', me.deaf ? 'Ativar áudio' : 'Desativar áudio', me.deaf ? 'off' : '');
+    setBtn('btnCam', '📷', cameraTrack ? 'Desligar câmera' : 'Ligar câmera', cameraTrack ? 'on' : '', !inCh);
+    setBtn('btnScreen', screenTrack ? '⏹️' : '🖥️', screenTrack ? 'Parar transmissão' : 'Compartilhar tela', screenTrack ? 'on' : '', !inCh);
+    setBtn('btnDisc', '📞', 'Desconectar', '', !inCh);
     updateCornerUI();
   }
   function renderAll() { renderChannels(); renderUserbar(); updateStageHead(); updateControls(); }
